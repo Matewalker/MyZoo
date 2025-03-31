@@ -1,0 +1,6 @@
+@MyZoo.Server_HostAddress = http://localhost:5025
+
+GET {{MyZoo.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

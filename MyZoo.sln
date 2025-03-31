@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyZoo.Server", "MyZoo.Server\MyZoo.Server.csproj", "{1BD9138F-1167-423B-B56E-CF6DC12531D3}"
+EndProject
+Project("{54A90642-561A-4BB1-A94E-469ADEE60C69}") = "myzoo.client", "myzoo.client\myzoo.client.esproj", "{5FC2C3F3-F7D0-491F-A116-B6671CFCC225}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1BD9138F-1167-423B-B56E-CF6DC12531D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BD9138F-1167-423B-B56E-CF6DC12531D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BD9138F-1167-423B-B56E-CF6DC12531D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BD9138F-1167-423B-B56E-CF6DC12531D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FC2C3F3-F7D0-491F-A116-B6671CFCC225}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FC2C3F3-F7D0-491F-A116-B6671CFCC225}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FC2C3F3-F7D0-491F-A116-B6671CFCC225}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{5FC2C3F3-F7D0-491F-A116-B6671CFCC225}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FC2C3F3-F7D0-491F-A116-B6671CFCC225}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FC2C3F3-F7D0-491F-A116-B6671CFCC225}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {40291D06-836D-4A6F-9518-CAAE1A9A3FB2}
+	EndGlobalSection
+EndGlobal
