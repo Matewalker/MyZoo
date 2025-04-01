@@ -1,11 +1,19 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 using MyZoo.Server.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace MyZoo.Data
 {
     public class ZooContext : DbContext
     {
+        private readonly IConfiguration _configuration;
+
+        public ZooContext(DbContextOptions<ZooContext> options, IConfiguration configuration) : base(options)
+        {
+            _configuration = configuration;
+        }
+
         public ZooContext(DbContextOptions<ZooContext> options) : base(options) { }
         public DbSet<AnimalSpecies> AnimalSpecies { get; set; }
         public DbSet<Animals> Animals { get; set; }
@@ -17,7 +25,8 @@ namespace MyZoo.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=MyZoo;Trusted_Connection=True;Encrypt=false");
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+            optionsBuilder.UseSqlServer(connectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
