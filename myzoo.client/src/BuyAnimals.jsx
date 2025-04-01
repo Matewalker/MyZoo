@@ -1,52 +1,72 @@
 import { useState, useEffect } from "react";
 
-const BuyAnimals = () => {
+function BuyAnimals() {
     const [animals, setAnimals] = useState([]);
-    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("/api/animals/buy")
-            .then(response => response.json())
-            .then(data => setAnimals(data))
-            .catch(error => setError(error.message));
+        fetch("https://localhost:7174/api/buy/get-animals", {
+            credentials: "include",
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                setAnimals(data);
+                setLoading(false);
+            })
+            .catch((error) => {
+                console.error("Hiba az állatok lekérésekor:", error);
+                setLoading(false);
+            });
     }, []);
 
-    const handleBuy = async (animalId) => {
-        try {
-            const response = await fetch("/api/animals/buy", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ animalId })
-            });
-
-            if (!response.ok) {
-                throw new Error("Vásárlás sikertelen.");
-            }
-
-            setAnimals(prevAnimals => prevAnimals.filter(a => a.id !== animalId));
-        } catch (error) {
-            setError(error.message);
-        }
+    const buyAnimal = (id) => {
+        fetch("/buy/animalbuy", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(id),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                alert(data.message);
+                if (data.success) {
+                    setAnimals((prev) => prev.filter((a) => a.id !== id));
+                }
+            })
+            .catch((error) => console.error("Hiba a vásárláskor:", error));
     };
 
+    if (loading) return <p>Betöltés...</p>;
+
     return (
-        <div>
-            <h1>Vásárolható állatok</h1>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            <ul>
-                {animals.map(animal => (
-                    <li key={animal.id}>
-                        <img src={animal.image} alt={animal.species} width={100} />
-                        <p>{animal.species} - {animal.gender === 1 ? "Hím" : "Nõstény"}</p>
-                        <p>Ár: {animal.value}</p>
-                        <button onClick={() => handleBuy(animal.id)}>Megvesz</button>
-                    </li>
+        <div className="p-4">
+            <h2 className="text-2xl font-bold mb-4">Állatok vásárlása</h2>
+            <div className="grid grid-cols-3 gap-4">
+                {animals.map((animal) => (
+                    <div key={animal.id} className="border p-4 rounded-lg shadow">
+                        <img
+                            src={animal.animalSpecies.image}
+                            alt={animal.animalSpecies.name}
+                            className="w-full h-40 object-cover rounded"
+                        />
+                        <h3 className="text-xl font-semibold mt-2">{animal.animalSpecies.name}</h3>
+                        <p>Nem: {animal.gender === 0 ? "Hím" : "Nõstény"}</p>
+                        <p>Ár: {animal.value} tõke</p>
+                        <button
+                            onClick={() => buyAnimal(animal.id)}
+                            className="mt-2 bg-blue-500 text-white py-1 px-3 rounded"
+                        >
+                            Vásárlás
+                        </button>
+                    </div>
                 ))}
-            </ul>
+            </div>
         </div>
     );
-};
+}
 
 export default BuyAnimals;
+
+

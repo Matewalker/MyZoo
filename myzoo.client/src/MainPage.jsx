@@ -1,103 +1,89 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function MainPage() {
-    const [date, setDate] = useState("2025-Jan");
-    const [capital, setCapital] = useState(0);
-    const [visitors, setVisitors] = useState(0);
+const MainPage = () => {
+    const [userData, setUserData] = useState({
+        currentDate: '',
+        capital: 0,
+        visitors: 0,
+    });
     const navigate = useNavigate();
-    const username = localStorage.getItem("username");
 
     useEffect(() => {
-        if (!username) {
-            navigate("/login");
-            return;
-        };
-        async function fetchData() {
+        const fetchData = async () => {
             try {
-                let response = await fetch("http://localhost:7174/api/menu/user-data/${username}");
-                let data = await response.json();
-                if (data.success) {
-                    setDate(data.currentDate);
-                    setCapital(data.capital);
-                    setVisitors(data.visitors);
-                } else {
-                    navigate("/login");
+                const userResponse = await fetch("https://localhost:7174/api/user/get-username", {
+                    credentials: "include",
+                });
+
+                if (!userResponse.ok) {
+                    throw new Error("Felhasználó nincs bejelentkezve.");
                 }
+
+                const userData = await userResponse.json();
+                const username = userData.username;
+
+                const response = await fetch(`https://localhost:7174/api/menu/user-data/${username}`, {
+                    credentials: "include",
+                });
+
+                if (!response.ok) {
+                    throw new Error("Hiba a felhasználói adatok lekérése közben");
+                }
+
+                const data = await response.json();
+                setUserData(data);
             } catch (error) {
-                console.error("Hiba történt:", error);
+                console.error(error);
             }
-        }
+        };
         fetchData();
-    }, [navigate, username]);
+    }, []);
 
-    async function nextTurn() {
+    // Handle the next turn functionality
+    const handleNextTurn = async () => {
         try {
-            let response = await fetch("http://localhost:7174/api/menu/next-turn", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`
-                }
+            const response = await fetch('https://localhost:7174/api/menu/next-turn', {
+                method: 'POST',
+                credentials: "include",
             });
-            let data = await response.json();
-
             if (!response.ok) {
-                throw new Error("Hiba történt a szerveren.");
+                throw new Error('Hiba a következõ kör feldolgozása közben');
             }
-
-            if (data.success) {
-                setDate(data.newDate);
-                setCapital(data.newCapital);
-                setVisitors(data.newVisitors);
-            } else {
-                alert("Hiba történt: " + data.message);
-            }
+            const data = await response.json();
+            setUserData({
+                ...userData,
+                currentDate: data.newDate,
+                capital: data.newCapital,
+                visitors: data.newVisitors,
+            });
         } catch (error) {
-            console.error("Hiba történt:", error);
-            alert("Hálózati hiba vagy szerverhiba történt!");
+            console.error(error);
         }
-    }
+    };
 
     return (
-        <div className="container mx-auto mt-10 p-6 bg-gray-100 rounded-lg shadow-lg">
-            <h1 className="text-4xl font-bold text-center text-blue-600 mb-6">Fõmenü</h1>
-
-            <h3 className="text-center text-xl mb-4">
-                Jelenlegi dátum: <span className="font-semibold">{date}</span>
-            </h3>
-
-            <div className="text-center mb-6">
-                <button onClick={nextTurn} className="btn btn-primary">
-                    Következõ hónap
-                </button>
+        <div className="menu">
+            <h1>Állatkert Menedzsment</h1>
+            <div className="menu-info">
+                <div>
+                    <span>Dátum: {userData.currentDate}</span>
+                    <button onClick={handleNextTurn}>Következõ hónap</button>
+                </div>
+                <div>
+                    <span>Tõke: {userData.capital} Ft</span>
+                </div>
+                <div>
+                    <span>Látogatók száma: {userData.visitors}</span>
+                </div>
             </div>
-
-            <div className="text-center mb-4 text-xl">
-                Jelenlegi tõke: <span className="text-green-600 font-bold">{capital}</span>
-            </div>
-
-            <div className="text-center mb-8 text-xl">
-                Havi látogatók: <span className="text-green-600 font-bold">{visitors}</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
-                <button onClick={() => navigate("/buy-packs")} className="menu-btn bg-yellow-400">
-                    Csomagok vásárlása
-                </button>
-                <button onClick={() => navigate("/buy-animals")} className="menu-btn bg-yellow-400">
-                    Állatok vásárlása
-                </button>
-                <button onClick={() => navigate("/zoo")} className="menu-btn bg-green-500">
-                    Az állatkert
-                </button>
-                <button onClick={() => navigate("/food-storage")} className="menu-btn bg-blue-400">
-                    Étel raktár
-                </button>
-                <button onClick={() => navigate("/animal-storage")} className="menu-btn bg-blue-400">
-                    Állat raktár
-                </button>
+            <div className="menu-buttons">
+                <button onClick={() => navigate('/animal-shop')}>Állatok vásárlása</button>
+                <button onClick={() => navigate('/animal-warehouse')}>Állatraktár</button>
+                <button onClick={() => navigate('/zoo')}>Állatkert adatai</button>
             </div>
         </div>
     );
-}
+};
+
+export default MainPage;

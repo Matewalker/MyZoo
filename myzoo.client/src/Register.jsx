@@ -1,58 +1,75 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-function Register() {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [message, setMessage] = useState("");
+const Register = () => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [message, setMessage] = useState('');
     const navigate = useNavigate();
 
-    const handleRegister = async (e) => {
-        e.preventDefault();  // Megakadályozza az alapértelmezett form elküldést
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        // Validáció
+        if (!username || !password) {
+            setMessage("Felhasználónév és jelszó megadása kötelezõ!");
+            return;
+        }
+
+        const data = {
+            Username: username,
+            PasswordHash: password,  // Itt jelszó titkosítását a backend végzi
+        };
+
         try {
-            const response = await fetch("https://localhost:7174/api/account/register", {
-                method: "POST",
+            const response = await fetch('https://localhost:7174/api/account/register', {
+                method: 'POST',
                 headers: {
-                    "Content-Type": "application/json",
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, passwordHash: password }),
-                credentials: "include", // Session-ök kezeléséhez szükséges
+                body: JSON.stringify(data),
             });
 
-            const data = await response.json();
+            const result = await response.json();
+
             if (response.ok) {
-                navigate("/login");  // Sikeres regisztráció után átirányítás a bejelentkezéshez
+                setMessage('Sikeres regisztráció!');
+                navigate('/login');
             } else {
-                setMessage(data.message);  // Hibás adat esetén megjelenítjük a hibaüzenetet
+                setMessage(result.message || 'Hiba történt a regisztráció során.');
             }
         } catch (error) {
-            setMessage("Hiba történt a regisztráció során: " + error.message);
+            setMessage('Hiba a kapcsolatban:' + error.message);
         }
     };
 
     return (
         <div className="register-container">
             <h2>Regisztráció</h2>
-            <form onSubmit={handleRegister}>
-                <input
-                    type="text"
-                    placeholder="Felhasználónév"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                />
-                <input
-                    type="password"
-                    placeholder="Jelszó"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                />
-                <button type="submit">Regisztráció</button>
+            <form onSubmit={handleSubmit}>
+                <div>
+                    <label>Felhasználónév:</label>
+                    <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        required
+                    />
+                </div>
+                <div>
+                    <label>Jelszó:</label>
+                    <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                    />
+                </div>
+                <button type="submit">Regisztrálás</button>
             </form>
-            {message && <p style={{ color: "red" }}>{message}</p>}
+            {message && <p>{message}</p>}
         </div>
     );
-}
+};
 
 export default Register;
