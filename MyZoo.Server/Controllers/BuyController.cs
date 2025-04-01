@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MyZoo.Data;
 using MyZoo.Server.Models;
 using System.Text.Json;
 
 namespace MyZoo.Server.Controllers
 {
+    [Route("api/buy")]
+    [ApiController]
     public class BuyController : Controller
     {
         private readonly ZooContext _context;
@@ -13,8 +16,17 @@ namespace MyZoo.Server.Controllers
         {
             _context = context;
         }
+
+        [HttpGet("get-animals")]
+        public IActionResult GetAnimals()
+        {
+            var animals = _context.Animals.Include(a => a.AnimalSpecies).Where(a => a.Gender != 2).ToList();
+
+            return Ok(animals);
+        }
+
         //Állat vásárlás
-        [HttpPost]
+        [HttpPost("buy-animal")]
         public JsonResult AnimalBuy([FromBody] int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");

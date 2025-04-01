@@ -3,12 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using MyZoo.Data;
 using MyZoo.Server.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace MyZoo.Server.Controllers
 {
     [Route("api/account")]
     [ApiController]
-    public class AccountController : Controller
+    public class AccountController : ControllerBase
     {
         private readonly ZooContext _context;
         private readonly PasswordHasher<UserModel> _passwordHasher;
@@ -70,31 +71,31 @@ namespace MyZoo.Server.Controllers
 
         // KIJELETKEZÉS
         [HttpPost("logout")]
-        public JsonResult Logout()
+        public IActionResult Logout()
         {
-            // 📌 Session törlése kijelentkezéskor
+            // Session törlése kijelentkezéskor
             HttpContext.Session.Remove("Username");
             HttpContext.Session.Remove("UserId");
 
-            return new JsonResult(new { message = "Sikeres kijelentkezés!" }) { StatusCode = 200 };
+            return Ok(new { message = "Sikeres kijelentkezés!" });
         }
 
         // FELHASZNÁLÓ LEKÉRÉSE A SESSIOBÓL
         [HttpGet("me")]
-        public JsonResult GetUser()
+        public IActionResult GetUser()
         {
             var username = HttpContext.Session.GetString("Username");
             var userId = HttpContext.Session.GetInt32("UserId");
 
             if (string.IsNullOrEmpty(username) || userId == null)
             {
-                return new JsonResult(new { message = "Nincs bejelentkezve felhasználó!" }) { StatusCode = 401 };
+                return Unauthorized(new { message = "Nincs bejelentkezve felhasználó!" });
             }
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user == null) return new JsonResult(new { message = "Felhasználó nem található!" }) { StatusCode = 404 };
+            if (user == null) return NotFound(new { message = "Felhasználó nem található!" });
 
-            return new JsonResult(new { user.Username, user.Capital, user.TicketPrices, user.CurrentDate }) { StatusCode = 200 };
+            return Ok(new { user.Username, user.Capital, user.TicketPrices, user.CurrentDate });
         }
     }
 }
