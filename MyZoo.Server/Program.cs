@@ -18,14 +18,21 @@ namespace MyZoo.Server
             builder.Services.AddSwaggerGen();
 
             builder.Services.AddDistributedMemoryCache();
-            builder.Services.AddSession();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30); // 30 perc után lejár
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
+            builder.Services.AddDistributedMemoryCache();
 
             var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy(MyAllowSpecificOrigins, policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173")
+                    policy.WithOrigins("https://localhost:5173")
+                          .AllowCredentials()
                           .AllowAnyHeader()
                           .AllowAnyMethod();
                 });
