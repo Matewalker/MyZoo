@@ -22,9 +22,9 @@ const Register = () => {
 
         try {
             const response = await fetch('https://localhost:7174/api/account/register', {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': "application/json",
                 },
                 body: JSON.stringify(data),
             });
@@ -44,10 +44,10 @@ const Register = () => {
 
     return (
         <div className="register-container">
-            <h2>Regisztráció</h2>
+            <h2>Registration</h2>
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label>Felhasználónév:</label>
+                    <label>Username:</label>
                     <input
                         type="text"
                         value={username}
@@ -56,7 +56,7 @@ const Register = () => {
                     />
                 </div>
                 <div>
-                    <label>Jelszó:</label>
+                    <label>Password:</label>
                     <input
                         type="password"
                         value={password}
@@ -64,7 +64,7 @@ const Register = () => {
                         required
                     />
                 </div>
-                <button type="submit">Regisztrálás</button>
+                <button type="submit">Registration</button>
             </form>
             {message && <p>{message}</p>}
         </div>

@@ -40,12 +40,12 @@ function BuyAnimals() {
             .catch((error) => console.error("Hiba a vásárláskor:", error));
     };
 
-    if (loading) return <p>Betöltés...</p>;
+    if (loading) return <p>Loading...</p>;
 
     return (
         <div className="p-4">
-            <h2 className="text-2xl font-bold mb-4">Állatok vásárlása</h2>
-            <button onClick={() => navigate('/user-data')}>Vissza fõmenübe</button>
+            <h2 className="text-2xl font-bold mb-4">Animal shop</h2>
+            <button onClick={() => navigate('/user-data')}>Back</button>
             <div className="grid grid-cols-3 gap-4">
                 {animals.map((animal) => (
                     <div key={animal.id} className="border p-4 rounded-lg shadow">
@@ -55,13 +55,13 @@ function BuyAnimals() {
                             className="w-full h-40 object-cover rounded"
                         />
                         <h3 className="text-xl font-semibold mt-2">{animal.animalSpecies?.species}</h3>
-                        <p>Nem: {animal.gender === 0 ? "Nõstény" : animal.gender === 1 ? "Hím" : "Kölyök"}</p>
-                        <p>Ár: {animal.value}</p>
+                        <p>Sex: {animal.gender === 0 ? "Nõstény" : animal.gender === 1 ? "Hím" : "Kölyök"}</p>
+                        <p>Price: {animal.value}</p>
                         <button
                             onClick={() => buyAnimal(animal.id)}
                             className="mt-2 bg-blue-500 text-white py-1 px-3 rounded"
                         >
-                            Vásárlás
+                            Buy
                         </button>
                     </div>
                 ))}

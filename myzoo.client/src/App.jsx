@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import StartPage from "./StartPage";
 import Register from "./Register";
 import Login from "./Login";
@@ -7,12 +7,13 @@ import BuyAnimals from "./BuyAnimals";
 import AnimalWarehouse from "./AnimalWarehouse";
 import Zoo from "./Zoo";
 import FeedCollection from "./FeedCollection";
-import './App.css';
-
+import Navbar from "./Navbar";
+import "./App.css";
 
 function App() {
     return (
         <Router>
+            <NavbarWithConditionalRender />
             <Routes>
                 <Route path="/" element={<StartPage />} />
                 <Route path="/register" element={<Register />} />
@@ -25,6 +26,16 @@ function App() {
             </Routes>
         </Router>
     );
+}
+
+function NavbarWithConditionalRender() {
+    const location = useLocation();
+
+    if (location.pathname === "/" || location.pathname === "/register" || location.pathname === "/login") {
+        return null;
+    }
+
+    return <Navbar />;
 }
 
 export default App;

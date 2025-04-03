@@ -13,7 +13,7 @@ const MainPage = () => {
         const fetchData = async () => {
             try {
                 const userResponse = await fetch("https://localhost:7174/api/user/get-username", {
-                    method: 'GET',
+                    method: "GET",
                     credentials: "include",
                     headers: {
                         'Content-Type': 'application/json'
@@ -68,24 +68,24 @@ const MainPage = () => {
 
     return (
         <div className="menu">
-            <h1>Állatkert Menedzsment</h1>
+            <h1>My Zoo</h1>
             <div className="menu-info">
                 <div>
-                    <span>Dátum: {userData.currentDate}</span>
-                    <button onClick={handleNextTurn}>Következõ hónap</button>
+                    <span>Date: {userData.currentDate}</span>
+                    <button onClick={handleNextTurn}>Next month</button>
                 </div>
                 <div>
-                    <span>Tõke: {userData.capital} Ft</span>
+                    <span>Capital: {userData.capital}</span>
                 </div>
                 <div>
-                    <span>Látogatók száma: {userData.visitors}</span>
+                    <span>Visitors: {userData.visitors}</span>
                 </div>
             </div>
             <div className="menu-buttons">
-                <button onClick={() => navigate('/animal-shop')}>Állatok vásárlása</button>
-                <button onClick={() => navigate('/animal-warehouse')}>Állatraktár</button>
-                <button onClick={() => navigate('/zoo')}>Állatkert adatai</button>
-                <button onClick={() => navigate('/feeds')}>Eledel raktár</button>
+                <button onClick={() => navigate('/animal-shop')}>Animal shop</button>
+                <button onClick={() => navigate('/animal-warehouse')}>Animal warehouse</button>
+                <button onClick={() => navigate('/zoo')}>Zoo</button>
+                <button onClick={() => navigate('/feeds')}>Feed warehouse</button>
             </div>
         </div>
     );

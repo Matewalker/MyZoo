@@ -29,7 +29,7 @@ function FeedCollection() {
 
     return (
         <div>
-            <h1>Elérhetõ Eledel</h1>
+            <h1>Feed warehouse</h1>
             {feeds.length === 0 ? (
                 <p>Nincsenek elérhetõ ételek.</p>
             ) : (

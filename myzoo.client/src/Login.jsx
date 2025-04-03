@@ -46,10 +46,10 @@ const Login = () => {
 
     return (
         <div className="login-container">
-            <h2>Bejelentkezés</h2>
+            <h2>Login</h2>
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label>Felhasználónév:</label>
+                    <label>Username:</label>
                     <input
                         type="text"
                         value={username}
@@ -58,7 +58,7 @@ const Login = () => {
                     />
                 </div>
                 <div>
-                    <label>Jelszó:</label>
+                    <label>Password:</label>
                     <input
                         type="password"
                         value={password}
@@ -66,7 +66,7 @@ const Login = () => {
                         required
                     />
                 </div>
-                <button type="submit">Bejelentkezés</button>
+                <button type="submit">Login</button>
             </form>
             {message && <p>{message}</p>}
         </div>

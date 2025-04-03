@@ -1,21 +1,25 @@
 import { useNavigate } from "react-router-dom";
+import { Box, Typography, Button } from '@mui/material';
 
 function StartPage() {
     const navigate = useNavigate();
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-            <h1 className="mb-8 text-4xl font-bold text-center">Játssz a MyZoo-val!</h1>
-
-            <div className="space-y-6">
-                <button onClick={() => navigate("/register")} className="start-btn">
-                    Regisztráció
-                </button>
-                <button onClick={() => navigate("/login")} className="start-btn">
-                    Bejelentkezés
-                </button>
-            </div>
-        </div>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+            <Typography variant="h1">Play with MyZoo!</Typography>
+            <Box sx={{
+                display: 'grid',
+                gap: 2,
+                justifyItems: 'center',
+            }}>
+                <Button onClick={() => navigate("/register")} size="md" variant="solid" color="primary">
+                    Registration
+                </Button>
+                <Button onClick={() => navigate("/login")} size="md" variant="solid" color="primary">
+                    Login
+                </Button>
+            </Box>
+        </Box>
     );
 }
 
