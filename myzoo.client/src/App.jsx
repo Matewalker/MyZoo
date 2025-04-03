@@ -6,6 +6,7 @@ import MainPage from "./MainPage";
 import BuyAnimals from "./BuyAnimals";
 import AnimalWarehouse from "./AnimalWarehouse";
 import Zoo from "./Zoo";
+import FeedCollection from "./FeedCollection";
 import './App.css';
 
 
@@ -20,6 +21,7 @@ function App() {
                 <Route path="/animal-shop" element={<BuyAnimals />} />
                 <Route path="/animal-warehouse" element={<AnimalWarehouse />} />
                 <Route path="/zoo" element={<Zoo />} />
+                <Route path="/feeds" element={<FeedCollection />} />
             </Routes>
         </Router>
     );

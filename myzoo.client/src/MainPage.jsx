@@ -85,6 +85,7 @@ const MainPage = () => {
                 <button onClick={() => navigate('/animal-shop')}>Állatok vásárlása</button>
                 <button onClick={() => navigate('/animal-warehouse')}>Állatraktár</button>
                 <button onClick={() => navigate('/zoo')}>Állatkert adatai</button>
+                <button onClick={() => navigate('/feeds')}>Eledel raktár</button>
             </div>
         </div>
     );

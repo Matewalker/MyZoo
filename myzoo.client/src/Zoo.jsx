@@ -4,24 +4,19 @@ const AnimalZoo = () => {
     const [zooAnimals, setZooAnimals] = useState([]);
 
     useEffect(() => {
-        // Az állatkertbe tartozó állatok lekérése
-        const fetchZooAnimals = async () => {
-            try {
-                const response = await fetch("https://localhost:7174/api/zoo/get-zoo-animals");
-                if (response.ok) {
-                    const data = await response.json();
-                    setZooAnimals(data); // Az állatkertben lévõ állatok
-                } else {
-                    alert("Nem sikerült lekérni az állatokat.");
-                    console.log(response.data);
-                }
-            } catch (error) {
-                console.error("Hálózati hiba:", error);
-                alert("Hiba történt a lekérés során.");
-            }
-        };
-
-        fetchZooAnimals();
+        fetch("https://localhost:7174/api/zoo/get-zoo-animals", {
+            method: "GET",
+            credentials: "include",
+        })
+            .then(response => {
+                console.log("HTTP válasz objektum:", response);
+                return response.json();
+            })
+            .then(data => {
+                console.log("API válasz JSON:", data);
+                setZooAnimals(data.animals || []);
+            })
+            .catch(error => console.error("Hiba történt:", error));
     }, []);
 
 
@@ -32,7 +27,8 @@ const AnimalZoo = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ warehouseAnimalId: id }), // Küldés JSON formátumban
+                body: JSON.stringify(id),
+                credentials: "include",
             });
 
             const data = await response.json();
@@ -54,15 +50,14 @@ const AnimalZoo = () => {
             {zooAnimals.length === 0 ? (
                 <p>Nincsenek állatok az állatkertben.</p>
             ) : (
-                <ul>
-                    {zooAnimals.map((animal) => (
-                        <li key={animal.id}>
-                            <img src={animal.image} alt={animal.species} width={100} />
-                            <p>{animal.species}</p>
-                            <button onClick={() => removeFromZoo(animal.id)}>Eltávolítás az állatkertbõl</button>
-                        </li>
-                    ))}
-                </ul>
+                zooAnimals.map((animal) => (
+                    <div key={animal.warehouseAnimalId}>
+                        <img src={animal.image} alt={animal.animalSpecies?.species} width="100" />
+                        <p>{animal.animalSpecies?.species}</p>
+                        <p>Nem: {animal.gender === 0 ? "Nõstény" : animal.gender === 1 ? "Hím" : "Kölyök"}</p>
+                        <button onClick={() => removeFromZoo(animal.warehouseAnimalId)}>Eltávolítás az állatkertbõl</button>
+                    </div>
+                ))
             )}
         </div>
     );
