@@ -6,6 +6,8 @@ using System.Text.Json;
 
 namespace MyZoo.Server.Controllers
 {
+    [Route("api/zoo")]
+    [ApiController]
     public class ZooController : Controller
     {
         private readonly ZooContext _context;
@@ -15,46 +17,23 @@ namespace MyZoo.Server.Controllers
             _context = context;
         }
 
-        public IActionResult GetAnimals()
-        {
-            if (_context == null)
-            {
-                return Content("Context is null!");
-            }
-
-            var animals = _context.Animals.Include(a => a.AnimalSpecies).ToList();
-            foreach (var animal in animals)
-            {
-                Console.WriteLine($"Animal ID: {animal.Id}, Species: {animal.AnimalSpecies?.Species ?? "N/A"}");
-            }
-
-            return View();
-        }
-        public IActionResult BuyAnimals()
-        {
-            var animals = _context.Animals.Include(a => a.AnimalSpecies).Where(a => a.Gender != 2).ToList();
-            return View(animals);
-        }
-
-        [HttpGet]
-        public IActionResult AnimalCollection()
+        [HttpGet("warehouse-animals")]
+        public JsonResult GetWarehouseAnimals()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-                return RedirectToAction("Login"); // ha nincs bejelentkezve a felhasználó
+                return Json(new { message = "Felhasználó nincs bejelentkezve.", status = "Unauthorized" });
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-                return NotFound("Felhasználó nem található.");
+                return Json(new { message = "Felhasználó nem található.", status = "NotFound" });
 
-            // Felhasználó állatainak lekérdezése a JSON-ból
             var warehouseAnimals = user.WarehouseAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
                 : new List<MyAnimalModel>();
 
-            // Az AnimalId-k alapján lekérdezzük az állatok adatait az adatbázisból
             var animalIds = warehouseAnimals.Select(a => a.AnimalId).ToList();
-            var animals = _context.Animals.Where(a => animalIds.Contains(a.Id)).ToList();
+            var animals = _context.Animals.Where(a => animalIds.Contains(a.Id)).Include(a => a.AnimalSpecies).ToList();
 
             var combinedAnimals = warehouseAnimals
             .Join(animals,
@@ -62,7 +41,7 @@ namespace MyZoo.Server.Controllers
               a => a.Id,
               (wa, a) => new
               {
-                  WarehouseAnimalId = wa.Id, // raktár azonosító
+                  WarehouseAnimalId = wa.Id,
                   AnimalId = a.Id,
                   a.Image,
                   a.Gender,
@@ -70,32 +49,42 @@ namespace MyZoo.Server.Controllers
                   AnimalSpecies = _context.AnimalSpecies.FirstOrDefault(s => s.Id == a.AnimalSpeciesId)
               }).ToList();
 
-
-            return View(combinedAnimals);
+            return Json(new { status = "Success", animals = combinedAnimals });
         }
 
-        public IActionResult ZooCollection()
+        [HttpGet("get-zoo-animals")]
+        public JsonResult GetZooAnimals()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-                return RedirectToAction("Login"); // ha nincs bejelentkezve a felhasználó
+                return Json(new { message = "Felhasználó nincs bejelentkezve.", status = "Unauthorized" });
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-                return NotFound("Felhasználó nem található.");
+                return Json(new { message = "Felhasználó nem található.", status = "NotFound" });
 
             var zooAnimals = user.ZooAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.ZooAnimals)
                 : new List<MyAnimalModel>();
 
             var animalIds = zooAnimals.Select(a => a.AnimalId).ToList();
-            var animals = _context.Animals
-                .Where(a => animalIds.Contains(a.Id))
-                .ToList();
+            var animals = _context.Animals.Where(a => animalIds.Contains(a.Id)).Include(a => a.AnimalSpecies).ToList();
 
-            ViewBag.TicketPrice = user.TicketPrices;
+            var combinedAnimals = zooAnimals
+            .Join(animals,
+              za => za.AnimalId,
+              a => a.Id,
+              (za, a) => new
+              {
+                  WarehouseAnimalId = za.Id,
+                  AnimalId = a.Id,
+                  a.Image,
+                  a.Gender,
+                  a.Value,
+                  AnimalSpecies = _context.AnimalSpecies.FirstOrDefault(s => s.Id == a.AnimalSpeciesId)
+              }).ToList();
 
-            return View(animals);
+            return Json(new { status = "Success", animals = combinedAnimals, ticketPrice = user.TicketPrices });
         }
 
         [HttpPost("set-ticket-prices")]
@@ -146,7 +135,7 @@ namespace MyZoo.Server.Controllers
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return RedirectToAction("ZooCollection");
+            return Ok(new { message = "Jegyár sikeresen beállítva.", newPrice = ticketPrice });
         }
     }
 }

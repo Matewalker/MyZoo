@@ -20,9 +20,20 @@ namespace MyZoo.Server.Controllers
         [HttpGet("get-animals")]
         public IActionResult GetAnimals()
         {
-            var animals = _context.Animals.Include(a => a.AnimalSpecies).Where(a => a.Gender != 2).ToList();
+            try
+            {
+                var animals = _context.Animals
+                    .Include(a => a.AnimalSpecies)
+                    .Where(a => a.Gender != 2)
+                    .OrderBy(a => a.AnimalSpecies.Species)
+                    .ToList();
 
-            return Ok(animals);
+                return Ok(animals);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Hiba történt az állatok lekérésekor.", error = ex.Message });
+            }
         }
 
         //Állat vásárlás
@@ -98,18 +109,18 @@ namespace MyZoo.Server.Controllers
         }
 
         [HttpPost("remove-from-warehouse")]
-        public IActionResult RemoveAnimalToWarehouse([FromBody] int warehouseAnimalId)
+        public JsonResult RemoveAnimalToWarehouse([FromBody] int warehouseAnimalId)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
             {
-                return Unauthorized("Felhasználó nincs bejelentkezve.");
+                return Json(new { success = false, message = "Felhasználó nincs bejelentkezve." });
             }
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
             {
-                return NotFound("Felhasználó nem található.");
+                return Json(new { success = false, message = "Felhasználó nem található." });
             }
 
             var warehouseAnimals = user.WarehouseAnimals != null
@@ -119,7 +130,7 @@ namespace MyZoo.Server.Controllers
             var animalToRemove = warehouseAnimals.FirstOrDefault(a => a.Id == warehouseAnimalId);
             if (animalToRemove == null)
             {
-                return NotFound("Az állat nem található a raktárban.");
+                return Json(new { success = false, message = "Az állat nem található a raktárban." });
             }
 
             var animal = _context.Animals.FirstOrDefault(a => a.Id == animalToRemove.AnimalId);
@@ -134,23 +145,23 @@ namespace MyZoo.Server.Controllers
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Ok(new { success = true, message = "Állat sikeresen eltávolítva a raktárból." });
+            return Json(new { success = true, message = "Állat sikeresen eladva!", newCapital = user.Capital });
         }
 
         // Állat hozzáadása az állatkerthez
         [HttpPost("add-to-zoo")]
-        public IActionResult AddAnimalToZoo([FromBody] int warehouseAnimalId)
+        public JsonResult AddAnimalToZoo([FromBody] int warehouseAnimalId)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
             {
-                return Unauthorized("Felhasználó nincs bejelentkezve.");
+                return Json(new { success = false, message = "Felhasználó nincs bejelentkezve." });
             }
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
             {
-                return NotFound("Felhasználó nem található.");
+                return Json(new { success = false, message = "Felhasználó nem található." });
             }
 
             var warehouseAnimals = user.WarehouseAnimals != null
@@ -160,7 +171,7 @@ namespace MyZoo.Server.Controllers
             var animalToMove = warehouseAnimals.FirstOrDefault(a => a.Id == warehouseAnimalId);
             if (animalToMove == null)
             {
-                return NotFound("Az állat nem található a raktárban.");
+                return Json(new { success = false, message = "Az állat nem található a raktárban." });
             }
 
             var zooAnimals = user.ZooAnimals != null
@@ -176,7 +187,7 @@ namespace MyZoo.Server.Controllers
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Ok(new { success = true, message = "Az állat sikeresen hozzáadva az állatkerthez!" });
+            return Json(new { success = true, message = "Az állat sikeresen hozzáadva az állatkerthez!" });
         }
 
         [HttpPost("remove-from-zoo")]

@@ -66,6 +66,8 @@ namespace MyZoo.Server.Controllers
             HttpContext.Session.SetString("Username", user.Username);
             HttpContext.Session.SetInt32("UserId", user.Id);
 
+            Console.WriteLine($"Session beállítva: Username = {HttpContext.Session.GetString("Username")}, UserId = {HttpContext.Session.GetInt32("UserId")}");
+
             return new JsonResult(new { message = "Sikeres bejelentkezés!" }) { StatusCode = 200 };
         }
 

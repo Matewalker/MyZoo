@@ -18,13 +18,14 @@ namespace MyZoo.Server.Controllers
         public IActionResult GetUsername()
         {
             var username = HttpContext.Session.GetString("Username");
+            var userId = HttpContext.Session.GetInt32("UserId");
 
-            if (string.IsNullOrEmpty(username))
+            if (string.IsNullOrEmpty(username) || userId == null)
             {
-                return Unauthorized(new { success = false, message = "Felhasználó nincs bejelentkezve." });
+                return Unauthorized(new { message = "Felhasználó nincs bejelentkezve." });
             }
 
-            return Ok(new { username });
+            return Ok(new { username, userId });
         }
     }
 }
