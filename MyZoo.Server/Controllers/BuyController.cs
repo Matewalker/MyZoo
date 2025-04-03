@@ -109,7 +109,7 @@ namespace MyZoo.Server.Controllers
         }
 
         [HttpPost("remove-from-warehouse")]
-        public JsonResult RemoveAnimalToWarehouse([FromBody] int warehouseAnimalId)
+        public JsonResult RemoveAnimalToWarehouse([FromBody] int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
@@ -127,7 +127,7 @@ namespace MyZoo.Server.Controllers
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
                 : new List<MyAnimalModel>();
 
-            var animalToRemove = warehouseAnimals.FirstOrDefault(a => a.Id == warehouseAnimalId);
+            var animalToRemove = warehouseAnimals.FirstOrDefault(a => a.Id == id);
             if (animalToRemove == null)
             {
                 return Json(new { success = false, message = "Az állat nem található a raktárban." });
@@ -150,7 +150,7 @@ namespace MyZoo.Server.Controllers
 
         // Állat hozzáadása az állatkerthez
         [HttpPost("add-to-zoo")]
-        public JsonResult AddAnimalToZoo([FromBody] int warehouseAnimalId)
+        public JsonResult AddAnimalToZoo([FromBody] int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
@@ -168,7 +168,7 @@ namespace MyZoo.Server.Controllers
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
                 : new List<MyAnimalModel>();
 
-            var animalToMove = warehouseAnimals.FirstOrDefault(a => a.Id == warehouseAnimalId);
+            var animalToMove = warehouseAnimals.FirstOrDefault(a => a.Id == id);
             if (animalToMove == null)
             {
                 return Json(new { success = false, message = "Az állat nem található a raktárban." });
@@ -191,18 +191,18 @@ namespace MyZoo.Server.Controllers
         }
 
         [HttpPost("remove-from-zoo")]
-        public IActionResult RemoveAnimalToZoo([FromBody] int warehouseAnimalId)
+        public JsonResult RemoveAnimalToZoo([FromBody] int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
             {
-                return Unauthorized("Felhasználó nincs bejelentkezve.");
+                return Json(new { success = false, message = "Felhasználó nincs bejelentkezve." });
             }
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
             {
-                return NotFound("Felhasználó nem található.");
+                return Json(new { success = false, message = "Felhasználó nem található." });
             }
 
             var warehouseAnimals = user.WarehouseAnimals != null
@@ -213,25 +213,22 @@ namespace MyZoo.Server.Controllers
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.ZooAnimals)
                 : new List<MyAnimalModel>();
 
-            var animalToRemove = zooAnimals.FirstOrDefault(a => a.Id == warehouseAnimalId);
+            var animalToRemove = zooAnimals.FirstOrDefault(a => a.Id == id);
             if (animalToRemove == null)
             {
-                return NotFound("Az állat nem található a raktárban.");
+                return Json(new { success = false, message = "Az állat nem található az állatkertben." });
             }
 
-            var animal = _context.Animals.FirstOrDefault(a => a.Id == animalToRemove.AnimalId);
-            if (animal != null)
-            {
-                user.Capital += animal.Value / 10;
-            }
-
-            warehouseAnimals.Remove(animalToRemove);
+            warehouseAnimals.Add(animalToRemove);
             user.WarehouseAnimals = JsonSerializer.Serialize(warehouseAnimals);
+
+            zooAnimals.Remove(animalToRemove);
+            user.ZooAnimals = JsonSerializer.Serialize(zooAnimals);
 
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Ok(new { success = true, message = "Állat sikeresen eltávolítva a raktárból." });
+            return Json(new { success = true, message = "Állat sikeresen eladva!" });
         }
     }
 }
