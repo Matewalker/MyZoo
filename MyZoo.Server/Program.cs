@@ -23,8 +23,9 @@ namespace MyZoo.Server
                 options.IdleTimeout = TimeSpan.FromMinutes(30); // 30 perc után lejár
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
-            builder.Services.AddDistributedMemoryCache();
 
             var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
             builder.Services.AddCors(options =>
@@ -42,6 +43,7 @@ namespace MyZoo.Server
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
             app.UseCors(MyAllowSpecificOrigins);
 
             app.UseSession();
