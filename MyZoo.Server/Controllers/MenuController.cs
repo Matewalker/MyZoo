@@ -25,6 +25,8 @@ namespace MyZoo.Server.Controllers
             {
                 return NotFound(new { success = false, message = "Felhasználó nem található." });
             }
+            string welcomeMessage = "Welcome" + user.Username + "!";
+            MessageGenerate(welcomeMessage);
 
             return Ok(new
             {
@@ -33,6 +35,16 @@ namespace MyZoo.Server.Controllers
                 capital = user.Capital,
                 visitors = user.Visitors
             });
+        }
+
+        [HttpGet("message")]
+        public IActionResult MessageGenerate(string message)
+        {
+            var messages = new List<string>();
+
+            messages.Add(message);
+
+            return Ok(new { messages });
         }
 
         [HttpPost("next-turn")]
@@ -121,12 +133,25 @@ namespace MyZoo.Server.Controllers
                         CurrentAge = adultAnimal.AgePeriod,
                         CanReproduce = true
                     };
-                    // Átalakul felnőtt állattá
+                    string adultAnimalMessage = "The little" + species.Species + "grew up.";
+                    MessageGenerate(adultAnimalMessage);
+
                     animals.RemoveAt(i);
                     animals.Add(myAdultAnimal);
                 }
                 else if (animal.CurrentAge == 0 && dbAnimal.Gender != 2)
                 {
+                    if(dbAnimal.Gender == 1)
+                    {
+                        string deadAnimalMessage = "The" + species.Species + "died, because he was too old.";
+                        MessageGenerate(deadAnimalMessage);
+                    }
+
+                    if (dbAnimal.Gender == 0)
+                    {
+                        string deadAnimalMessage = "The" + species.Species + "died, because she was too old.";
+                        MessageGenerate(deadAnimalMessage);
+                    }
                     animals.RemoveAt(i);
                 }
             }
@@ -176,6 +201,18 @@ namespace MyZoo.Server.Controllers
                 }
                 else
                 {
+                    if (dbAnimal.Gender == 1)
+                    {
+                        string deadAnimalMessage = "The" + species.Species + "died, because it didn't get feed.";
+                        MessageGenerate(deadAnimalMessage);
+                    }
+
+                    if (dbAnimal.Gender == 0)
+                    {
+                        string deadAnimalMessage = "The" + species.Species + "died, because it didn't get feed.";
+                        MessageGenerate(deadAnimalMessage);
+                    }
+
                     zooAnimals.RemoveAt(i);
                 }
             }
@@ -222,6 +259,11 @@ namespace MyZoo.Server.Controllers
                                     CanReproduce = false
                                 };
                                 zooAnimals[i].CanReproduce = false;
+
+                                var species = _context.AnimalSpecies.FirstOrDefault(s => s.Id == actualFemaleAnimal.AnimalSpeciesId);
+
+                                string babyMessage = "Congratulations on the birth of a" + species.Species + "cub";
+                                MessageGenerate(babyMessage);
 
                                 zooAnimals.Add(myBaby);
                             }
