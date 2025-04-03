@@ -10,7 +10,6 @@ const Register = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
-        // Validáció
         if (!username || !password) {
             setMessage("Felhasználónév és jelszó megadása kötelezõ!");
             return;
@@ -18,7 +17,7 @@ const Register = () => {
 
         const data = {
             Username: username,
-            PasswordHash: password,  // Itt jelszó titkosítását a backend végzi
+            PasswordHash: password,
         };
 
         try {

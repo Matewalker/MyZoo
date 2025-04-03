@@ -13,7 +13,11 @@ const MainPage = () => {
         const fetchData = async () => {
             try {
                 const userResponse = await fetch("https://localhost:7174/api/user/get-username", {
+                    method: 'GET',
                     credentials: "include",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
 
                 if (!userResponse.ok) {
