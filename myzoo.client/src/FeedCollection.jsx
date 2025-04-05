@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Box, Card, CardContent, CardMedia, Typography, Grid } from "@mui/material";
 
 function FeedCollection() {
     const [feeds, setFeeds] = useState([]);
@@ -28,20 +29,35 @@ function FeedCollection() {
     }, []);
 
     return (
-        <div>
-            <h1>Feed warehouse</h1>
-            {feeds.length === 0 ? (
-                <p>Nincsenek elérhetõ ételek.</p>
-            ) : (
-                <ul>
+        <Box sx={{ padding: 4 }}>
+            <Typography variant="h4" align="center" gutterBottom>
+                Feed Warehouse
+            </Typography>
+
+                <Grid container spacing={3}>
                     {feeds.map((feed) => (
-                        <li key={feed.id}>
-                            <p>{feed.feedName} - {feed.price}</p>
-                        </li>
+                        <Grid item xs={12} sm={6} md={4} lg={3} key={feed.id}>
+                            <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                                <CardMedia
+                                    component="img"
+                                    height="300"
+                                    image={feed.feedImage}
+                                    alt={feed.feedName}
+                                    sx={{ objectFit: "cover" }}
+                                />
+                                <CardContent>
+                                    <Typography variant="h6" component="div">
+                                        {feed.feedName}
+                                    </Typography>
+                                    <Typography color="text.secondary">
+                                        Value: {feed.price}
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Grid>
                     ))}
-                </ul>
-            )}
-        </div>
+                </Grid>
+        </Box>
     );
 };
 

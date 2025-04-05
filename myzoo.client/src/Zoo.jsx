@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { Container, Grid, Card, CardMedia, CardContent, CardActions, Typography, Button, Box, LinearProgress } from "@mui/material";
 
 const AnimalZoo = () => {
     const [zooAnimals, setZooAnimals] = useState([]);
     const [ticketPrice, setTicketPrice] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetch("https://localhost:7174/api/zoo/get-zoo-animals", {
@@ -16,8 +18,10 @@ const AnimalZoo = () => {
             .then(data => {
                 console.log("API válasz JSON:", data);
                 setZooAnimals(data.animals || []);
+                setLoading(false);
             })
             .catch(error => console.error("Hiba történt:", error));
+            setLoading(false);
     }, []);
 
 
@@ -34,8 +38,7 @@ const AnimalZoo = () => {
 
             const data = await response.json();
             if (response.ok) {
-                alert(data.message); // Sikeres eltávolítás üzenet
-                setZooAnimals(zooAnimals.filter((animal) => animal.id !== id)); // Az eltávolított állat eltüntetése a listából
+                setZooAnimals(zooAnimals.filter((animal) => animal.warehouseAnimalId !== id));
             } else {
                 alert(data.message || "Hiba történt!");
             }
@@ -60,7 +63,6 @@ const AnimalZoo = () => {
             const data = await response.json();
             if (response.ok) {
                 setTicketPrice(data.newPrice);
-                alert(data.message);
             } else {
                 alert(data.message || "Hiba történt a jegyár frissítésekor.");
             }
@@ -84,7 +86,6 @@ const AnimalZoo = () => {
             const data = await response.json();
             if (response.ok) {
                 setTicketPrice(data.newPrice);
-                alert(data.message);
             } else {
                 alert(data.message || "Hiba történt a jegyár frissítésekor.");
             }
@@ -94,27 +95,72 @@ const AnimalZoo = () => {
         }
     }    
 
+    if (loading) return <LinearProgress value={38} />;
+
     return (
-        <div>
-            <h1>Zoo</h1>
-            <div>
-                <h2>Aktuális jegyár: {ticketPrice}</h2>
-                <button onClick={increaseTicketPrice}>Jegyár növelése</button>
-                <button onClick={decreaseTicketPrice}>Jegyár csökkentése</button>
-            </div>
-            {zooAnimals.length === 0 ? (
-                <p>Nincsenek állatok az állatkertben.</p>
-            ) : (
-                zooAnimals.map((animal) => (
-                    <div key={animal.warehouseAnimalId}>
-                        <img src={animal.image} alt={animal.animalSpecies?.species} width="100" />
-                        <p>{animal.animalSpecies?.species}</p>
-                        <p>Sex: {animal.gender === 0 ? "Nõstény" : animal.gender === 1 ? "Hím" : "Kölyök"}</p>
-                        <button onClick={() => removeFromZoo(animal.warehouseAnimalId)}>Remove</button>
-                    </div>
-                ))
-            )}
-        </div>
+        <Container sx={{ paddingY: 4 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+                <Typography variant="h2" fontWeight="bold">
+                    Zoo Animals
+                </Typography>
+                <Box>
+                    <Typography variant="h6">Current Ticket Price: {ticketPrice}</Typography>
+                    <Button variant="contained" color="primary" onClick={increaseTicketPrice}>
+                        Increase Ticket Price
+                    </Button>
+                    <Button variant="contained" color="secondary" onClick={decreaseTicketPrice}>
+                        Decrease Ticket Price
+                    </Button>
+                </Box>
+            </Box>
+
+            <Grid container spacing={3}>
+                {zooAnimals.length === 0 ? (
+                    <Typography>No animals in the zoo.</Typography>
+                ) : (
+                    zooAnimals.map((animal) => (
+                        <Grid item xs={12} sm={6} md={4} key={animal.warehouseAnimalId}>
+                            <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                                <CardMedia
+                                    component="img"
+                                    height="300"
+                                    image={animal.image}
+                                    alt={animal.animalSpecies?.species}
+                                    sx={{ objectFit: "cover" }}
+                                />
+                                <CardContent>
+                                    <Typography variant="h6" component="div">
+                                        {animal.animalSpecies?.species}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Sex: {animal.gender === 0 ? "Female" : animal.gender === 1 ? "Male" : "Baby"}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Reproduce: {animal.canReproduce === true ? "Can" : "Can't"}
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Remaining life: {animal.currentAge} months
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Attraction Rating: {animal.attractionRating}
+                                    </Typography>
+                                </CardContent>
+                                <CardActions>
+                                    <Button
+                                        variant="contained"
+                                        fullWidth
+                                        color="secondary"
+                                        onClick={() => removeFromZoo(animal.warehouseAnimalId)}
+                                    >
+                                        Remove from Zoo
+                                    </Button>
+                                </CardActions>
+                            </Card>
+                        </Grid>
+                    ))
+                )}
+            </Grid>
+        </Container>
     );
 };
 

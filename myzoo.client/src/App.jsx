@@ -8,7 +8,9 @@ import AnimalWarehouse from "./AnimalWarehouse";
 import Zoo from "./Zoo";
 import FeedCollection from "./FeedCollection";
 import Navbar from "./Navbar";
-import "./App.css";
+import AnimalData from "./AnimalData";
+import { useContext } from "react";
+import { UserContext } from "./UserContext";
 
 function App() {
     return (
@@ -23,19 +25,22 @@ function App() {
                 <Route path="/animal-warehouse" element={<AnimalWarehouse />} />
                 <Route path="/zoo" element={<Zoo />} />
                 <Route path="/feeds" element={<FeedCollection />} />
+                <Route path="/animal-data/:id" element={<AnimalData />} />
             </Routes>
         </Router>
     );
 }
 
 function NavbarWithConditionalRender() {
+
+    const { userData } = useContext(UserContext);
     const location = useLocation();
 
     if (location.pathname === "/" || location.pathname === "/register" || location.pathname === "/login") {
         return null;
     }
 
-    return <Navbar />;
+    return <Navbar key={userData.capital} />;
 }
 
 export default App;
