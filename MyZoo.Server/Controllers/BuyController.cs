@@ -18,15 +18,22 @@ namespace MyZoo.Server.Controllers
         }
 
         [HttpGet("get-animals")]
-        public IActionResult GetAnimals()
+        public IActionResult GetAnimals(string continent = null)
         {
             try
             {
-                var animals = _context.Animals
-                    .Include(a => a.AnimalSpecies)
-                    .Where(a => a.Gender != 2)
-                    .OrderBy(a => a.AnimalSpecies.Species)
-                    .ToList();
+                IQueryable<Animals> query = _context.Animals
+                .Include(a => a.AnimalSpecies)
+                .Where(a => a.Gender != 2) 
+                .OrderBy(a => a.AnimalSpecies.Species);
+
+                if (!string.IsNullOrEmpty(continent))
+                {
+                    query = query.Where(a => a.AnimalSpecies.AnimalContinents
+                        .Any(ac => ac.Continent.Name == continent));
+                }
+
+                var animals = query.ToList();
 
                 return Ok(animals);
             }
@@ -93,11 +100,15 @@ namespace MyZoo.Server.Controllers
             var animal = _context.Animals.FirstOrDefault(a => a.Id == animalId);
             if (animal == null) return NotFound("Az állat nem található.");
 
+            Random rnd = new Random();
+
+            int newAnimalAge = animal.AgePeriod/2 + rnd.Next(1, animal.AgePeriod/2 - 1);
+
             var newAnimal = new MyAnimalModel
             {
                 Id = zooAnimals.Concat(warehouseAnimals).Any() ? zooAnimals.Concat(warehouseAnimals).Max(a => a.Id) + 1 : 1,
                 AnimalId = animalId,
-                CurrentAge = animal.AgePeriod,
+                CurrentAge = newAnimalAge,
                 CanReproduce = true
             };
 
@@ -136,7 +147,11 @@ namespace MyZoo.Server.Controllers
             var animal = _context.Animals.FirstOrDefault(a => a.Id == animalToRemove.AnimalId);
             if (animal != null)
             {
-                user.Capital += animal.Value / 10;
+                //Ha egy evig tud elni akkor megkapjuk a tizedet
+                if(animalToRemove.CurrentAge > 11)
+                {
+                    user.Capital += animal.Value / 10;
+                }
             }
 
             warehouseAnimals.Remove(animalToRemove);
@@ -228,7 +243,7 @@ namespace MyZoo.Server.Controllers
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Json(new { success = true, message = "Állat sikeresen eladva!" });
+            return Json(new { success = true, message = "Animal add to warehouse!" });
         }
     }
 }

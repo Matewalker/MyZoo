@@ -80,11 +80,66 @@ namespace MyZoo.Server.Controllers
                   AnimalId = a.Id,
                   a.Image,
                   a.Gender,
-                  a.Value,
+                  a.AttractionRating,
+                  CanReproduce = za.CanReproduce,
+                  CurrentAge = za.CurrentAge,
                   AnimalSpecies = _context.AnimalSpecies.FirstOrDefault(s => s.Id == a.AnimalSpeciesId)
               }).ToList();
 
             return Json(new { status = "Success", animals = combinedAnimals, ticketPrice = user.TicketPrices });
+        }
+
+        [HttpGet("get-animal-data/{id}")]
+        public async Task<ActionResult<AnimalData>> GetAnimalData(int id)
+        {
+            var animal = _context.Animals.FirstOrDefault(a => a.Id == id);
+
+            var species = _context.AnimalSpecies.FirstOrDefault(s => s.Id == animal.AnimalSpeciesId);
+
+            var whichFeed = _context.AnimalFeeds.FirstOrDefault(f => f.AnimalSpeciesId == species.Id);
+
+            var feed = _context.Feed.FirstOrDefault(f => f.Id == whichFeed.FeedId);
+
+            var whichContinents = _context.AnimalContinents.Where(ac => ac.AnimalSpeciesId == species.Id).ToList();
+
+            var continentIds = whichContinents.Select(wc => wc.ContinentId).ToList();
+
+            var continents = _context.Continents.Where(c => continentIds.Contains(c.Id)).ToList();
+
+            if (animal == null || species == null || whichFeed == null || feed == null || whichContinents == null || continentIds == null || continents == null)
+            {
+                return NotFound();
+            }
+
+            var animalData = new AnimalData
+            {
+                Id = animal.Id,
+                Gender = animal.Gender,
+                Image = animal.Image,
+                FeedingPeriod = animal.FeedingPeriod,
+                AgePeriod = animal.AgePeriod,
+                Value = animal.Value,
+                AttractionRating = animal.AttractionRating,
+                Species = species.Species,
+                Feed = feed.FeedName,
+                Continents = continents.Select(c => c.Name).ToList()
+            };
+
+            return Ok(animalData);
+        }
+
+        [HttpGet("continents")]
+        public IActionResult GetContinents()
+        {
+            try
+            {
+                var continents = _context.Continents.ToList();
+                return Ok(continents);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Hiba történt a kontinensek lekérésekor.", error = ex.Message });
+            }
         }
 
         [HttpPost("set-ticket-prices")]

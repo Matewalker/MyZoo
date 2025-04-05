@@ -20,7 +20,6 @@ namespace MyZoo.Server.Controllers
             _passwordHasher = new PasswordHasher<UserModel>();
         }
 
-        // REGISZTRÁCIÓ
         [HttpPost("register")]
         public JsonResult Register([FromBody] UserModel model)
         {
@@ -51,7 +50,6 @@ namespace MyZoo.Server.Controllers
             return new JsonResult(new { message = "Sikeres regisztráció!" }) { StatusCode = 200 };
         }
 
-        // BEJELENTKEZÉS
         [HttpPost("login")]
         public JsonResult Login([FromBody] UserModel model)
         {
@@ -62,27 +60,21 @@ namespace MyZoo.Server.Controllers
                 return new JsonResult(new { message = "Hibás felhasználónév vagy jelszó!" }) { StatusCode = 400 };
             }
 
-            // Session beállítása bejelentkezéskor
             HttpContext.Session.SetString("Username", user.Username);
             HttpContext.Session.SetInt32("UserId", user.Id);
-
-            Console.WriteLine($"Session beállítva: Username = {HttpContext.Session.GetString("Username")}, UserId = {HttpContext.Session.GetInt32("UserId")}");
 
             return new JsonResult(new { message = "Sikeres bejelentkezés!" }) { StatusCode = 200 };
         }
 
-        // KIJELETKEZÉS
         [HttpPost("logout")]
         public IActionResult Logout()
         {
-            // Session törlése kijelentkezéskor
             HttpContext.Session.Remove("Username");
             HttpContext.Session.Remove("UserId");
 
             return Ok(new { message = "Sikeres kijelentkezés!" });
         }
 
-        // FELHASZNÁLÓ LEKÉRÉSE A SESSIOBÓL
         [HttpGet("me")]
         public IActionResult GetUser()
         {

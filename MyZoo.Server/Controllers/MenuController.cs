@@ -25,8 +25,6 @@ namespace MyZoo.Server.Controllers
             {
                 return NotFound(new { success = false, message = "Felhasználó nem található." });
             }
-            string welcomeMessage = "Welcome" + user.Username + "!";
-            MessageGenerate(welcomeMessage);
 
             return Ok(new
             {
@@ -37,14 +35,21 @@ namespace MyZoo.Server.Controllers
             });
         }
 
-        [HttpGet("message")]
-        public IActionResult MessageGenerate(string message)
+        [HttpPost("message")]
+        public IActionResult MessageGenerate([FromBody] string message)
         {
-            var messages = new List<string>();
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                MessageStorage.Messages.Add(message);
+            }
 
-            messages.Add(message);
+            return Ok();
+        }
 
-            return Ok(new { messages });
+        [HttpGet("get-messages")]
+        public IActionResult GetMessages()
+        {
+            return Ok(new { messages = MessageStorage.Messages.ToList() });
         }
 
         [HttpPost("next-turn")]
@@ -62,7 +67,6 @@ namespace MyZoo.Server.Controllers
                 return NotFound("Felhasználó nem található.");
             }
 
-            // JSON deszerializálás
             var zooAnimals = user.ZooAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.ZooAnimals)
                 : new List<MyAnimalModel>();
@@ -71,11 +75,9 @@ namespace MyZoo.Server.Controllers
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
                 : new List<MyAnimalModel>();
 
-            // Az összes állat ID lekérése
             var animalIds = zooAnimals.Select(a => a.AnimalId).ToList();
             var animals = _context.Animals.Where(a => animalIds.Contains(a.Id)).ToList();
 
-            // Állatok életkorának frissítése
             UpdateAnimalAges(user, warehouseAnimals);
             UpdateAnimalAges(user, zooAnimals);
 
@@ -84,16 +86,13 @@ namespace MyZoo.Server.Controllers
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            // Látogatók számának frissítése
             int totalAttraction = animals.Sum(a => a.AttractionRating);
             user.Visitors = CalculateVisitors(totalAttraction, zooAnimals.Count);
 
-            // Etetési költségek levonása
             ProcessFeedingCosts(user);
 
             HandleReproduction(user);
 
-            // Pénz frissítése jegyekből
             user.Capital += user.Visitors * user.TicketPrices;
 
             user.CurrentDate = user.CurrentDate.AddMonths(1);
@@ -105,7 +104,7 @@ namespace MyZoo.Server.Controllers
 
         private void UpdateAnimalAges(UserModel user, List<MyAnimalModel> animals)
         {
-            for (int i = animals.Count - 1; i >= 0; i--)  // Hátrafelé iterálás a biztonságos törléshez
+            for (int i = animals.Count - 1; i >= 0; i--)
             {
                 var animal = animals[i];
                 var dbAnimal = _context.Animals.FirstOrDefault(a => a.Id == animal.AnimalId);
@@ -120,7 +119,7 @@ namespace MyZoo.Server.Controllers
                 {
                     animal.CurrentAge--;
                 }
-                // Ha most válik felnőtté
+
                 else if (animal.CurrentAge == 0 && dbAnimal.Gender == 2)
                 {
                     int randomGender = rnd.Next(0, 2);
@@ -133,7 +132,7 @@ namespace MyZoo.Server.Controllers
                         CurrentAge = adultAnimal.AgePeriod,
                         CanReproduce = true
                     };
-                    string adultAnimalMessage = "The little" + species.Species + "grew up.";
+                    string adultAnimalMessage = "The little " + species.Species + " grew up.";
                     MessageGenerate(adultAnimalMessage);
 
                     animals.RemoveAt(i);
@@ -143,13 +142,13 @@ namespace MyZoo.Server.Controllers
                 {
                     if(dbAnimal.Gender == 1)
                     {
-                        string deadAnimalMessage = "The" + species.Species + "died, because he was too old.";
+                        string deadAnimalMessage = "The " + species.Species + " died, because he was too old.";
                         MessageGenerate(deadAnimalMessage);
                     }
 
                     if (dbAnimal.Gender == 0)
                     {
-                        string deadAnimalMessage = "The" + species.Species + "died, because she was too old.";
+                        string deadAnimalMessage = "The " + species.Species + " died, because she was too old.";
                         MessageGenerate(deadAnimalMessage);
                     }
                     animals.RemoveAt(i);
@@ -203,13 +202,13 @@ namespace MyZoo.Server.Controllers
                 {
                     if (dbAnimal.Gender == 1)
                     {
-                        string deadAnimalMessage = "The" + species.Species + "died, because it didn't get feed.";
+                        string deadAnimalMessage = "The " + species.Species + " died, because it didn't get feed.";
                         MessageGenerate(deadAnimalMessage);
                     }
 
                     if (dbAnimal.Gender == 0)
                     {
-                        string deadAnimalMessage = "The" + species.Species + "died, because it didn't get feed.";
+                        string deadAnimalMessage = "The " + species.Species + " died, because it didn't get feed.";
                         MessageGenerate(deadAnimalMessage);
                     }
 
@@ -262,7 +261,7 @@ namespace MyZoo.Server.Controllers
 
                                 var species = _context.AnimalSpecies.FirstOrDefault(s => s.Id == actualFemaleAnimal.AnimalSpeciesId);
 
-                                string babyMessage = "Congratulations on the birth of a" + species.Species + "cub";
+                                string babyMessage = "Congratulations on the birth of a " + species.Species + " baby.";
                                 MessageGenerate(babyMessage);
 
                                 zooAnimals.Add(myBaby);
