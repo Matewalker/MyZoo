@@ -1,6 +1,6 @@
 ﻿namespace MyZoo.Server.Models
 {
-    public class Animals
+    public class AnimalData
     {
         public int Id { get; set; }
         public int Gender { get; set; }
@@ -9,7 +9,8 @@
         public int AgePeriod { get; set; }
         public int Value { get; set; }
         public int AttractionRating { get; set; }
-        public int AnimalSpeciesId { get; set; }
-        public AnimalSpecies AnimalSpecies { get; set; }
+        public string Species { get; set; }
+        public string Feed { get; set; }
+        public List<string> Continents { get; set; }
     }
 }
