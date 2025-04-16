@@ -17,32 +17,6 @@ namespace MyZoo.Server.Controllers
             _context = context;
         }
 
-        [HttpGet("get-animals")]
-        public IActionResult GetAnimals(string continent = null)
-        {
-            try
-            {
-                IQueryable<Animals> query = _context.Animals
-                .Include(a => a.AnimalSpecies)
-                .Where(a => a.Gender != 2) 
-                .OrderBy(a => a.AnimalSpecies.Species);
-
-                if (!string.IsNullOrEmpty(continent))
-                {
-                    query = query.Where(a => a.AnimalSpecies.AnimalContinents
-                        .Any(ac => ac.Continent.Name == continent));
-                }
-
-                var animals = query.ToList();
-
-                return Ok(animals);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Hiba történt az állatok lekérésekor.", error = ex.Message });
-            }
-        }
-
         //Állat vásárlás
         [HttpPost("buy-animal")]
         public JsonResult AnimalBuy([FromBody] int id)
@@ -57,12 +31,12 @@ namespace MyZoo.Server.Controllers
                     var animals = _context.Animals.FirstOrDefault(c => c.Id == id);
                     if (animals == null)
                     {
-                        return Json(new { success = false, message = "Nem található", capital = user.Capital });
+                        return new JsonResult(new { message = "Not found", capital = user.Capital }) { StatusCode = 404 };
                     }
 
                     if (user.Capital < animals.Value)
                     {
-                        return Json(new { success = false, message = "Nincs elég tőkéd!", capital = user.Capital });
+                        return new JsonResult(new { message = "You don't have enough capital!", capital = user.Capital }) { StatusCode = 400 };
                     }
 
                     user.Capital -= animals.Value;
@@ -70,16 +44,16 @@ namespace MyZoo.Server.Controllers
                     _context.Users.Update(user);
                     AddAnimalToWarehouse(userId.Value, id);
 
-                    return Json(new { success = true, message = $"Sikeresen megvetted: {id}", capital = user.Capital });
+                    return new JsonResult(new { message = $"You have successfully purchased!", capital = user.Capital }) { StatusCode = 200 };
                 }
                 else
                 {
-                    return Json(new { success = false, message = "Felhasználó nem található!" });
+                    return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
                 }
             }
             else
             {
-                return Json(new { success = false, message = "Felhasználó ID nem található!" });
+                return new JsonResult(new { message = "User ID not found!" }) { StatusCode = 401 };
             }
         }
 
@@ -87,7 +61,7 @@ namespace MyZoo.Server.Controllers
         public IActionResult AddAnimalToWarehouse(int userId, int animalId)
         {
             var user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user == null) return NotFound("Felhasználó nem található.");
+            if (user == null) return NotFound("User not found!");
 
             var warehouseAnimals = user.WarehouseAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
@@ -98,7 +72,7 @@ namespace MyZoo.Server.Controllers
                : new List<MyAnimalModel>();
 
             var animal = _context.Animals.FirstOrDefault(a => a.Id == animalId);
-            if (animal == null) return NotFound("Az állat nem található.");
+            if (animal == null) return NotFound("The animal is not found.");
 
             Random rnd = new Random();
 
@@ -116,23 +90,20 @@ namespace MyZoo.Server.Controllers
             user.WarehouseAnimals = JsonSerializer.Serialize(warehouseAnimals);
 
             _context.SaveChanges();
-            return Ok($"Állat (Id: {animalId}) hozzáadva a raktárhoz.");
+            return Ok("The animal added to the warehouse.");
         }
 
         [HttpPost("remove-from-warehouse")]
-        public JsonResult RemoveAnimalToWarehouse([FromBody] int id)
+        public JsonResult RemoveAnimalFromWarehouse([FromBody] int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-            {
-                return Json(new { success = false, message = "Felhasználó nincs bejelentkezve." });
-            }
+                return new JsonResult(new { message = "User is not logged in." }) { StatusCode = 401 };
+
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-            {
-                return Json(new { success = false, message = "Felhasználó nem található." });
-            }
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
 
             var warehouseAnimals = user.WarehouseAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
@@ -140,14 +111,12 @@ namespace MyZoo.Server.Controllers
 
             var animalToRemove = warehouseAnimals.FirstOrDefault(a => a.Id == id);
             if (animalToRemove == null)
-            {
-                return Json(new { success = false, message = "Az állat nem található a raktárban." });
-            }
+                return new JsonResult(new { message = "The animal is not in the warehouse." }) { StatusCode = 404 };
 
             var animal = _context.Animals.FirstOrDefault(a => a.Id == animalToRemove.AnimalId);
             if (animal != null)
             {
-                //Ha egy evig tud elni akkor megkapjuk a tizedet
+                //Ha egy evig tud elni akkor megkapjuk a tizedet az ertekenek
                 if(animalToRemove.CurrentAge > 11)
                 {
                     user.Capital += animal.Value / 10;
@@ -160,24 +129,19 @@ namespace MyZoo.Server.Controllers
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Json(new { success = true, message = "Állat sikeresen eladva!", newCapital = user.Capital });
+            return new JsonResult(new { message = "Animal successfully sold!", newCapital = user.Capital }) { StatusCode = 200 };
         }
 
-        // Állat hozzáadása az állatkerthez
         [HttpPost("add-to-zoo")]
         public JsonResult AddAnimalToZoo([FromBody] int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-            {
-                return Json(new { success = false, message = "Felhasználó nincs bejelentkezve." });
-            }
+                return new JsonResult(new { message = "User is not logged in." }) { StatusCode = 401 };
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-            {
-                return Json(new { success = false, message = "Felhasználó nem található." });
-            }
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
 
             var warehouseAnimals = user.WarehouseAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
@@ -185,9 +149,7 @@ namespace MyZoo.Server.Controllers
 
             var animalToMove = warehouseAnimals.FirstOrDefault(a => a.Id == id);
             if (animalToMove == null)
-            {
-                return Json(new { success = false, message = "Az állat nem található a raktárban." });
-            }
+                return new JsonResult(new { message = "The animal is not in the warehouse." }) { StatusCode = 404 };
 
             var zooAnimals = user.ZooAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.ZooAnimals)
@@ -202,23 +164,19 @@ namespace MyZoo.Server.Controllers
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Json(new { success = true, message = "Az állat sikeresen hozzáadva az állatkerthez!" });
+            return new JsonResult(new { message = "The animal has been successfully added to the zoo!" }) { StatusCode = 200 };
         }
 
         [HttpPost("remove-from-zoo")]
-        public JsonResult RemoveAnimalToZoo([FromBody] int id)
+        public JsonResult RemoveAnimalFromZoo([FromBody] int id)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-            {
-                return Json(new { success = false, message = "Felhasználó nincs bejelentkezve." });
-            }
+                return new JsonResult(new { message = "User is not logged in." }) { StatusCode = 401 };
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-            {
-                return Json(new { success = false, message = "Felhasználó nem található." });
-            }
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
 
             var warehouseAnimals = user.WarehouseAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
@@ -230,9 +188,7 @@ namespace MyZoo.Server.Controllers
 
             var animalToRemove = zooAnimals.FirstOrDefault(a => a.Id == id);
             if (animalToRemove == null)
-            {
-                return Json(new { success = false, message = "Az állat nem található az állatkertben." });
-            }
+                return new JsonResult(new { message = "The animal is not in the zoo." }) { StatusCode = 404 };
 
             warehouseAnimals.Add(animalToRemove);
             user.WarehouseAnimals = JsonSerializer.Serialize(warehouseAnimals);
@@ -243,7 +199,7 @@ namespace MyZoo.Server.Controllers
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Json(new { success = true, message = "Animal add to warehouse!" });
+            return new JsonResult(new { message = "Animal add to warehouse!" }) { StatusCode = 200 };
         }
     }
 }

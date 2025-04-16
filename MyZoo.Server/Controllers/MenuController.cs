@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using MyZoo.Data;
 using MyZoo.Server.Models;
 using System.Text.Json;
@@ -18,21 +17,16 @@ namespace MyZoo.Server.Controllers
         }
 
         [HttpGet("user-data/{username}")]
-        public IActionResult GetUserData(string username)
+        public JsonResult GetUserData(string username)
         {
             var user = _context.Users.FirstOrDefault(u => u.Username == username);
             if (user == null)
             {
-                return NotFound(new { success = false, message = "Felhasználó nem található." });
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
             }
 
-            return Ok(new
-            {
-                success = true,
-                currentDate = user.CurrentDate.ToString("yyyy-MMM"),
-                capital = user.Capital,
-                visitors = user.Visitors
-            });
+            return new JsonResult(new { currentDate = user.CurrentDate.ToString("yyyy-MMM"), capital = user.Capital, visitors = user.Visitors })
+            { StatusCode = 200 };
         }
 
         [HttpPost("message")]
@@ -40,7 +34,7 @@ namespace MyZoo.Server.Controllers
         {
             if (!string.IsNullOrWhiteSpace(message))
             {
-                MessageStorage.Messages.Add(message);
+                MessageStorage.AddMessage(message);
             }
 
             return Ok();
@@ -53,19 +47,15 @@ namespace MyZoo.Server.Controllers
         }
 
         [HttpPost("next-turn")]
-        public IActionResult NextTurn()
+        public JsonResult NextTurn()
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-            {
-                return Unauthorized("Felhasználó nincs bejelentkezve.");
-            }
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 401 };
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-            {
-                return NotFound("Felhasználó nem található.");
-            }
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
 
             var zooAnimals = user.ZooAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.ZooAnimals)
@@ -78,8 +68,8 @@ namespace MyZoo.Server.Controllers
             var animalIds = zooAnimals.Select(a => a.AnimalId).ToList();
             var animals = _context.Animals.Where(a => animalIds.Contains(a.Id)).ToList();
 
-            UpdateAnimalAges(user, warehouseAnimals);
-            UpdateAnimalAges(user, zooAnimals);
+            UpdateAnimalAges(warehouseAnimals);
+            UpdateAnimalAges(zooAnimals);
 
             user.ZooAnimals = JsonSerializer.Serialize(zooAnimals);
             user.WarehouseAnimals = JsonSerializer.Serialize(warehouseAnimals);
@@ -89,20 +79,21 @@ namespace MyZoo.Server.Controllers
             int totalAttraction = animals.Sum(a => a.AttractionRating);
             user.Visitors = CalculateVisitors(totalAttraction, zooAnimals.Count);
 
+            user.Capital += user.Visitors * user.TicketPrices;
+
             ProcessFeedingCosts(user);
 
             HandleReproduction(user);
-
-            user.Capital += user.Visitors * user.TicketPrices;
 
             user.CurrentDate = user.CurrentDate.AddMonths(1);
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Json(new { success = true, newDate = user.CurrentDate.ToString("yyyy-MMM"), newCapital = user.Capital, newVisitors = user.Visitors });
+            return new JsonResult(new { newDate = user.CurrentDate.ToString("yyyy-MMM"), newCapital = user.Capital, newVisitors = user.Visitors,
+            newZooAnimals = zooAnimals}) { StatusCode = 200};
         }
 
-        private void UpdateAnimalAges(UserModel user, List<MyAnimalModel> animals)
+        private void UpdateAnimalAges(List<MyAnimalModel> animals)
         {
             for (int i = animals.Count - 1; i >= 0; i--)
             {
@@ -120,7 +111,7 @@ namespace MyZoo.Server.Controllers
                     animal.CurrentAge--;
                 }
 
-                else if (animal.CurrentAge == 0 && dbAnimal.Gender == 2)
+                if (animal.CurrentAge == 0 && dbAnimal.Gender == 2)
                 {
                     int randomGender = rnd.Next(0, 2);
                     var adultAnimal = _context.Animals.FirstOrDefault(a => a.Gender == randomGender && a.AnimalSpeciesId == species.Id);
@@ -163,9 +154,9 @@ namespace MyZoo.Server.Controllers
             int multiplier = zooAnimalCount switch
             {
                 < 10 => rnd.Next(1, 4),
-                >= 10 and < 25 => rnd.Next(4, 8),
-                >= 25 and < 75 => rnd.Next(8, 11),
-                _ => rnd.Next(11, 15),
+                >= 10 and < 25 => rnd.Next(1, 5),
+                >= 25 and < 75 => rnd.Next(2, 6),
+                _ => rnd.Next(2, 7),
             };
 
             return totalAttraction * multiplier;
@@ -273,6 +264,30 @@ namespace MyZoo.Server.Controllers
                 _context.Users.Update(user);
                 _context.SaveChanges();
             }
+        }
+
+        [HttpPost("reset-game")]
+        public JsonResult ResetGame()
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null)
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 401 };
+
+            var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
+            if (user == null)
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
+
+            user.Capital = 5000;
+            user.WarehouseAnimals = JsonSerializer.Serialize(new List<MyAnimalModel>());
+            user.ZooAnimals = JsonSerializer.Serialize(new List<MyAnimalModel>());
+            user.TicketPrices = 0;
+            user.Visitors = 0;
+            user.CurrentDate = new DateTime(2025, 1, 1);
+
+            _context.Users.Update(user);
+            _context.SaveChanges();
+
+            return new JsonResult(new { message = "Game successfully reset.", newUserdata = user }) { StatusCode = 200 };
         }
     }
 }

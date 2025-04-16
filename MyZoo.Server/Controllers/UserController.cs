@@ -22,7 +22,7 @@ namespace MyZoo.Server.Controllers
 
             if (string.IsNullOrEmpty(username) || userId == null)
             {
-                return Unauthorized(new { message = "Felhasználó nincs bejelentkezve." });
+                return Unauthorized(new { message = "User is not logged in." });
             }
 
             return Ok(new { username, userId });

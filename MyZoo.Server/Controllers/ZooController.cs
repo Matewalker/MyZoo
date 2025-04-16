@@ -22,11 +22,11 @@ namespace MyZoo.Server.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-                return Json(new { message = "Felhasználó nincs bejelentkezve.", status = "Unauthorized" });
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 401 };
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-                return Json(new { message = "Felhasználó nem található.", status = "NotFound" });
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
 
             var warehouseAnimals = user.WarehouseAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.WarehouseAnimals)
@@ -47,9 +47,9 @@ namespace MyZoo.Server.Controllers
                   a.Gender,
                   a.Value,
                   AnimalSpecies = _context.AnimalSpecies.FirstOrDefault(s => s.Id == a.AnimalSpeciesId)
-              }).ToList();
+              }).ToList().OrderBy(a => a.AnimalSpecies?.Species);
 
-            return Json(new { status = "Success", animals = combinedAnimals });
+            return new JsonResult(new { animals = combinedAnimals }) { StatusCode = 200 };
         }
 
         [HttpGet("get-zoo-animals")]
@@ -57,11 +57,11 @@ namespace MyZoo.Server.Controllers
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-                return Json(new { message = "Felhasználó nincs bejelentkezve.", status = "Unauthorized" });
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 401 };
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-                return Json(new { message = "Felhasználó nem található.", status = "NotFound" });
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
 
             var zooAnimals = user.ZooAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.ZooAnimals)
@@ -84,78 +84,21 @@ namespace MyZoo.Server.Controllers
                   CanReproduce = za.CanReproduce,
                   CurrentAge = za.CurrentAge,
                   AnimalSpecies = _context.AnimalSpecies.FirstOrDefault(s => s.Id == a.AnimalSpeciesId)
-              }).ToList();
+              }).ToList().OrderBy(a => a.AnimalSpecies?.Species);
 
-            return Json(new { status = "Success", animals = combinedAnimals, ticketPrice = user.TicketPrices });
-        }
-
-        [HttpGet("get-animal-data/{id}")]
-        public async Task<ActionResult<AnimalData>> GetAnimalData(int id)
-        {
-            var animal = _context.Animals.FirstOrDefault(a => a.Id == id);
-
-            var species = _context.AnimalSpecies.FirstOrDefault(s => s.Id == animal.AnimalSpeciesId);
-
-            var whichFeed = _context.AnimalFeeds.FirstOrDefault(f => f.AnimalSpeciesId == species.Id);
-
-            var feed = _context.Feed.FirstOrDefault(f => f.Id == whichFeed.FeedId);
-
-            var whichContinents = _context.AnimalContinents.Where(ac => ac.AnimalSpeciesId == species.Id).ToList();
-
-            var continentIds = whichContinents.Select(wc => wc.ContinentId).ToList();
-
-            var continents = _context.Continents.Where(c => continentIds.Contains(c.Id)).ToList();
-
-            if (animal == null || species == null || whichFeed == null || feed == null || whichContinents == null || continentIds == null || continents == null)
-            {
-                return NotFound();
-            }
-
-            var animalData = new AnimalData
-            {
-                Id = animal.Id,
-                Gender = animal.Gender,
-                Image = animal.Image,
-                FeedingPeriod = animal.FeedingPeriod,
-                AgePeriod = animal.AgePeriod,
-                Value = animal.Value,
-                AttractionRating = animal.AttractionRating,
-                Species = species.Species,
-                Feed = feed.FeedName,
-                Continents = continents.Select(c => c.Name).ToList()
-            };
-
-            return Ok(animalData);
-        }
-
-        [HttpGet("continents")]
-        public IActionResult GetContinents()
-        {
-            try
-            {
-                var continents = _context.Continents.ToList();
-                return Ok(continents);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Hiba történt a kontinensek lekérésekor.", error = ex.Message });
-            }
+            return new JsonResult(new { animals = combinedAnimals, ticketPrice = user.TicketPrices }) { StatusCode = 200 };
         }
 
         [HttpPost("set-ticket-prices")]
-        public IActionResult SetTicketPrices([FromBody] int ticketPrice)
+        public JsonResult SetTicketPrices([FromBody] int ticketPrice)
         {
             var userId = HttpContext.Session.GetInt32("UserId");
             if (userId == null)
-            {
-                return Unauthorized("Felhasználó nincs bejelentkezve.");
-            }
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 401 };
 
             var user = _context.Users.FirstOrDefault(u => u.Id == userId.Value);
             if (user == null)
-            {
-                return NotFound("Felhasználó nem található.");
-            }
+                return new JsonResult(new { message = "User not found!" }) { StatusCode = 404 };
 
             var zooAnimals = user.ZooAnimals != null
                 ? JsonSerializer.Deserialize<List<MyAnimalModel>>(user.ZooAnimals)
@@ -163,34 +106,103 @@ namespace MyZoo.Server.Controllers
 
             int animalCount = zooAnimals.Count;
 
-            if (animalCount < 3 && ticketPrice > 5)
+            if (animalCount < 3 && ticketPrice > 4)
             {
-                ticketPrice = 5;
+                user.TicketPrices = 4;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 4", newPrice = 4 }) { StatusCode = 200 };
             }
-            else if (animalCount < 10 && ticketPrice > 8)
+            else if (animalCount < 10 && ticketPrice > 7)
             {
-                ticketPrice = 8;
+                user.TicketPrices = 7;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 7", newPrice = 7 }) { StatusCode = 200 };
             }
-            else if (animalCount < 25 && ticketPrice > 15)
+            else if (animalCount < 25 && ticketPrice > 10)
             {
-                ticketPrice = 15;
+                user.TicketPrices = 10;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 10", newPrice = 10 }) { StatusCode = 200 };
             }
-            else if (animalCount < 40 && ticketPrice > 25)
+            else if (animalCount < 40 && ticketPrice > 13)
             {
-                ticketPrice = 25;
+                user.TicketPrices = 13;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 13", newPrice = 13 }) { StatusCode = 200 };
             }
-            else if (ticketPrice > 150)
+            else if (animalCount < 60 && ticketPrice > 16)
             {
-                ticketPrice = 150;
+                user.TicketPrices = 16;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 16", newPrice = 16 }) { StatusCode = 200 };
+            }
+            else if (animalCount < 80 && ticketPrice > 19)
+            {
+                user.TicketPrices = 19;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 19", newPrice = 19 }) { StatusCode = 200 };
+            }
+            else if (animalCount < 110 && ticketPrice > 22)
+            {
+                user.TicketPrices = 22;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 22", newPrice = 22 }) { StatusCode = 200 };
+            }
+            else if (animalCount < 140 && ticketPrice > 25)
+            {
+                user.TicketPrices = 25;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 25", newPrice = 25 }) { StatusCode = 200 };
+            }
+            else if (animalCount < 180 && ticketPrice > 28)
+            {
+                user.TicketPrices = 28;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 28", newPrice = 28 }) { StatusCode = 200 };
+            }
+            else if (ticketPrice > 30)
+            {
+                user.TicketPrices = 30;
+
+                _context.Users.Update(user);
+                _context.SaveChanges();
+
+                return new JsonResult(new { message = "Maximum ticket price: 30", newPrice = 30 }) { StatusCode = 200 };
             }
 
-            // Jegyárak beállítása
             user.TicketPrices = ticketPrice;
 
             _context.Users.Update(user);
             _context.SaveChanges();
 
-            return Ok(new { message = "Jegyár sikeresen beállítva.", newPrice = ticketPrice });
+            return new JsonResult(new { message = "Ticket price set successfully.", newPrice = ticketPrice }) { StatusCode = 200 };
         }
     }
 }

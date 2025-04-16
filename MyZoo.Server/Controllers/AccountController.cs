@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using MyZoo.Data;
 using MyZoo.Server.Models;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Extensions;
 
 namespace MyZoo.Server.Controllers
 {
@@ -24,14 +22,10 @@ namespace MyZoo.Server.Controllers
         public JsonResult Register([FromBody] UserModel model)
         {
             if (model == null || string.IsNullOrEmpty(model.Username) || string.IsNullOrEmpty(model.PasswordHash))
-            {
-                return new JsonResult(new { message = "Érvénytelen adatok!" }) { StatusCode = 400 };
-            }
+                return new JsonResult(new { message = "Invalid data!" }) { StatusCode = 400 };
 
             if (_context.Users.Any(u => u.Username == model.Username))
-            {
-                return new JsonResult(new { message = "A felhasználónév már létezik!" }) { StatusCode = 400 };
-            }
+                return new JsonResult(new { message = "Username already exists!" }) { StatusCode = 400 };
 
             var hashedPassword = _passwordHasher.HashPassword(model, model.PasswordHash);
             var newUser = new UserModel
@@ -47,7 +41,7 @@ namespace MyZoo.Server.Controllers
             _context.Users.Add(newUser);
             _context.SaveChanges();
 
-            return new JsonResult(new { message = "Sikeres regisztráció!" }) { StatusCode = 200 };
+            return new JsonResult(new { message = "Successful registration!" }) { StatusCode = 200 };
         }
 
         [HttpPost("login")]
@@ -56,40 +50,21 @@ namespace MyZoo.Server.Controllers
             var user = _context.Users.FirstOrDefault(u => u.Username == model.Username);
 
             if (user == null || _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.PasswordHash) != PasswordVerificationResult.Success)
-            {
-                return new JsonResult(new { message = "Hibás felhasználónév vagy jelszó!" }) { StatusCode = 400 };
-            }
+                return new JsonResult(new { message = "Incorrect username or password!" }) { StatusCode = 400 };
 
             HttpContext.Session.SetString("Username", user.Username);
             HttpContext.Session.SetInt32("UserId", user.Id);
 
-            return new JsonResult(new { message = "Sikeres bejelentkezés!" }) { StatusCode = 200 };
+            return new JsonResult(new { message = "Successful login!" }) { StatusCode = 200 };
         }
 
         [HttpPost("logout")]
-        public IActionResult Logout()
+        public JsonResult Logout()
         {
-            HttpContext.Session.Remove("Username");
-            HttpContext.Session.Remove("UserId");
+            HttpContext.Session.Clear();
+            MessageStorage.Messages.Clear();
 
-            return Ok(new { message = "Sikeres kijelentkezés!" });
-        }
-
-        [HttpGet("me")]
-        public IActionResult GetUser()
-        {
-            var username = HttpContext.Session.GetString("Username");
-            var userId = HttpContext.Session.GetInt32("UserId");
-
-            if (string.IsNullOrEmpty(username) || userId == null)
-            {
-                return Unauthorized(new { message = "Nincs bejelentkezve felhasználó!" });
-            }
-
-            var user = _context.Users.FirstOrDefault(u => u.Id == userId);
-            if (user == null) return NotFound(new { message = "Felhasználó nem található!" });
-
-            return Ok(new { user.Username, user.Capital, user.TicketPrices, user.CurrentDate });
+            return new JsonResult(new { message = "Successful login!" }) { StatusCode = 200 };
         }
     }
 }
