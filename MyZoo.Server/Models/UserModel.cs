@@ -15,7 +15,9 @@ namespace MyZoo.Server.Models
         public string? WarehouseAnimals { get; set; }
         public string? ZooAnimals { get; set; }
         public int TicketPrices { get; set; } = 0;
+        [Required]
         public DateTime CurrentDate { get; set; } = new DateTime(2025, 1, 1);
+        [Required]
         public int Visitors { get; set; } = 0;
     }
 }
