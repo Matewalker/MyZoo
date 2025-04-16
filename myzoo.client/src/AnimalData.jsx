@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, Card, CardContent, CardMedia, LinearProgress } from '@mui/material';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Box, Typography, Button, Card, CardContent, CardMedia, LinearProgress } from "@mui/material";
 
 function AnimalData() {
     const { id } = useParams();
@@ -8,13 +8,11 @@ function AnimalData() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch(`https://localhost:7174/api/zoo/get-animal-data/${id}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+        fetch(`https://localhost:7174/api/animal/get-animal-data/${id}`, {
+            method: "GET",
+            credentials: "include",
+        })
+            .then((response) => response.json())
             .then(data => {
                 setAnimalData(data);
             })
@@ -28,30 +26,29 @@ function AnimalData() {
     };
 
     if (!animalData) {
-        return <LinearProgress value={38} />;
+        return <LinearProgress value={38} color="success" />;
     }
 
     return (
         <Box sx={{ padding: 4 }}>
-            <Card sx={{ display: "flex" }}>
-                <CardMedia
-                    component="img"
-                    sx={{ width: "300" }}
-                    image={animalData.image}
-                    alt={animalData.species}
-                />
-                <Box sx={{ display: "flex", flexDirection: "column", padding: 2 }}>
-                    <CardContent>
-                        <Typography variant="h4">{animalData.species}</Typography>
-                        <Typography variant="body1"><strong>Sex:</strong> {animalData.gender === 0 ? "Female" : animalData.gender === 1 ? "Male" : "Baby"}</Typography>
-                        <Typography variant="body1"><strong>Life:</strong> {animalData.agePeriod/12} years</Typography>
-                        <Typography variant="body1"><strong>Value:</strong> {animalData.value}</Typography>
-                        <Typography variant="body1"><strong>Attraction Rating:</strong> {animalData.attractionRating}</Typography>
-                        <Typography variant="body1"><strong>Feeding Period:</strong> {animalData.feedingPeriod} / months</Typography>
-                        <Typography variant="body1"><strong>Feed:</strong> {animalData.feed}</Typography>
-                        <Typography variant="body1"><strong>Continents:</strong> {animalData.continents.join(', ')}</Typography>
-                    </CardContent>
-                    <Button variant="outline" sx={{ color: "mediumseagreen" }} onClick={handleBack}>Back</Button>
+            <Card sx={{ display: "flex", flexDirection: "column", alignItems: "center", maxWidth: 400, margin: "auto", backgroundColor: "mediumseagreen" }}>
+                <CardMedia component="img" sx={{ width: "100%", height: 400, objectFit: "cover" }} image={animalData.image} alt={animalData.species}/>
+
+                <CardContent sx={{ width: "100%", color: "white" }}>
+                    <Typography variant="h4" align="center">{animalData.species}</Typography>
+                    <Typography variant="body1">Sex: {animalData.gender === 0 ? "Female" : animalData.gender === 1 ? "Male" : "Baby"}</Typography>
+                    <Typography variant="body1">Life: {animalData.agePeriod / 12} years</Typography>
+                    <Typography variant="body1">Value: {animalData.value}</Typography>
+                    <Typography variant="body1">Attraction Rating: {animalData.attractionRating}</Typography>
+                    <Typography variant="body1">Feeding Period: {animalData.feedingPeriod} / months</Typography>
+                    <Typography variant="body1">Feed: {animalData.feed}</Typography>
+                    <Typography variant="body1">Continents: {animalData.continents.join(", ")}</Typography>
+                </CardContent>
+
+                <Box sx={{ pb: 2 }}>
+                    <Button variant="outlined" sx={{ color: "white", borderColor: "white" }} onClick={handleBack}>
+                        Back
+                    </Button>
                 </Box>
             </Card>
         </Box>

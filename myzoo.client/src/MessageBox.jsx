@@ -1,39 +1,29 @@
-import React, { useState } from 'react';
-import { List, ListItem, ListItemButton, ListItemText, Collapse, ListItemIcon, Box } from '@mui/material';
-import { KeyboardArrowRight, KeyboardArrowDown, Mail } from '@mui/icons-material';
-import { ExpandMore, ExpandLess } from '@mui/icons-material';
+import React from "react";
+import { List, ListItem, ListItemText, ListItemIcon, Box } from "@mui/material";
+import { Mail } from "@mui/icons-material";
 
-function MessageBox({ messages }) {
-    const [open, setOpen] = useState(false);
-
-    const handleClick = () => {
-        setOpen(!open);
-    };
-
+function MessageBox({ messages, sx ={} }) {
     return (
-        <Box>
+        <Box sx={{ width: "34%", maxHeight: "300px", overflowY: "auto", backgroundColor: "mediumseagreen", padding: "10px", 
+            borderRadius: "8px", ...sx }}>
             <List>
-                <ListItem>
-                    <ListItemButton onClick={handleClick}>
-                        <ListItemIcon>
-                            <Mail /> {/* Boríték ikon */}
-                        </ListItemIcon>
-                        <ListItemText primary="Messages" />
-                        {open ? <ExpandMore /> : <ExpandLess />} {/* Kép ikon a lenyitás/becsukás állapotának kezeléséhez */}
-                    </ListItemButton>
+                <ListItem disablePadding>
+                    <ListItemIcon>
+                        <Mail sx={{ color: "white" }} />
+                    </ListItemIcon>
+                    <ListItemText primary="Messages" sx={{ color: "white" }} />
                 </ListItem>
-            </List>
 
-            {/* Lenyitható tartalom */}
-            <Collapse in={open} timeout="auto" unmountOnExit>
-                <List component="div" disablePadding>
-                    {messages.map((message, index) => (
-                        <ListItem key={index}>
-                            <ListItemText primary={message.text} />
-                        </ListItem>
-                    ))}
-                </List>
-            </Collapse>
+                <Box sx={{ maxHeight: "100px", overflowY: "auto", marginTop: "10px" }}>
+                    <List>
+                        {messages.map((message, index) => (
+                            <ListItem key={index}>
+                                <ListItemText primary={message} sx={{ color: "white" }} />
+                            </ListItem>
+                        ))}
+                    </List>
+                </Box>
+            </List>
         </Box>
     );
 }
